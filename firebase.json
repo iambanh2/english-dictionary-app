@@ -1,0 +1,58 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "README.md",
+      "DEPLOY_GUIDE.md",
+      "deploy.sh"
+    ],
+    "rewrites": [
+      {
+        "source": "/",
+        "destination": "/html/index.html"
+      },
+      {
+        "source": "/signin",
+        "destination": "/html/signin.html"
+      },
+      {
+        "source": "/signin.html",
+        "destination": "/html/signin.html"
+      },
+      {
+        "source": "/register",
+        "destination": "/html/register.html"
+      },
+      {
+        "source": "/register.html",
+        "destination": "/html/register.html"
+      },
+      {
+        "source": "/test-avatar",
+        "destination": "/html/test-avatar.html"
+      },
+      {
+        "source": "/test-avatar.html",
+        "destination": "/html/test-avatar.html"
+      },
+      {
+        "source": "**",
+        "destination": "/html/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css|html)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=3600"
+          }
+        ]
+      }
+    ]
+  }
+}

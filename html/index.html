@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Từ Điển Tiếng Anh</title>
+    <link rel="stylesheet" href="/css/style.css?v=2.1.6">
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>Từ Điển Tiếng Anh</h1>
+            <div class="user-section" id="userSection" style="display: none;">
+                <div class="user-info">
+                    <span id="userDisplayName">👤 Guest</span>
+                    <button id="logoutBtn" class="logout-btn">🚪 Đăng xuất</button>
+                </div>
+            </div>
+            <div class="auth-section" id="authSection">
+                <a href="/signin" class="auth-link">🔐 Đăng nhập</a>
+                <a href="/register" class="auth-link">🚀 Đăng ký</a>
+            </div>
+        </div>
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="wordInput" placeholder="Nhập từ tiếng Anh..." autofocus>
+                <button id="searchBtn">Tra cứu</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Đang tra cứu...</p>
+        </div>
+
+        <div id="result" class="result-section hidden">
+            <div class="word-info">
+                <h2 id="wordTitle"></h2>
+                <div class="phonetics">
+                    <div class="phonetic-item">
+                        <span class="phonetic-label">Anh-Anh:</span>
+                        <span id="phoneticUK" class="phonetic-text"></span>
+                        <button id="playUK" class="play-btn" title="Phát âm Anh-Anh">🔊</button>
+                    </div>
+                    <div class="phonetic-item">
+                        <span class="phonetic-label">Anh-Mỹ:</span>
+                        <span id="phoneticUS" class="phonetic-text"></span>
+                        <button id="playUS" class="play-btn" title="Phát âm Anh-Mỹ">🔊</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="meanings-section">
+                <h3>Nghĩa tiếng Việt:</h3>
+                <div id="meanings" class="meanings"></div>
+            </div>
+
+            <div class="english-meanings-section">
+                <h3>Định nghĩa tiếng Anh:</h3>
+                <div id="englishMeanings" class="english-meanings"></div>
+            </div>
+
+            <div class="examples-section">
+                <h3>Ví dụ:</h3>
+                <div id="examples" class="examples"></div>
+            </div>
+
+            <!-- Save Word Section -->
+            <div class="save-section">
+                <button id="saveWordBtn" class="save-btn">💾 Lưu từ này</button>
+                <button id="toggleSavedWords" class="toggle-saved-btn">📚 Từ đã lưu (<span id="savedCount">0</span>)</button>
+            </div>
+        </div>
+
+        <!-- Saved Words Panel -->
+        <div id="savedWordsPanel" class="saved-words-panel hidden">
+            <div class="saved-header">
+                <h3>📚 Từ vựng đã lưu</h3>
+                <button id="closeSavedPanel" class="close-btn">✖</button>
+            </div>
+            <div class="saved-controls">
+                <input type="text" id="searchSaved" placeholder="Tìm kiếm trong từ đã lưu...">
+                <div class="action-buttons">
+                    <button id="exportBtn" class="export-btn">📥 Xuất JSON</button>
+                    <button id="importBtn" class="import-btn">📤 Nhập JSON</button>
+                    <input type="file" id="importFile" accept=".json" style="display:none;">
+                    <button id="clearAllBtn" class="clear-btn">🗑️ Xóa tất cả</button>
+                </div>
+            </div>
+            <div class="storage-info">
+                <span id="storageStatus">📱 Chưa đăng nhập - Dữ liệu lưu trên thiết bị này</span>
+            </div>
+            <div id="savedWordsList" class="saved-words-list"></div>
+        </div>
+
+        <div id="error" class="error-section hidden">
+            <p id="errorMessage"></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>Sử dụng API từ <a href="https://dictionaryapi.dev/" target="_blank">Free Dictionary API</a> và <a href="https://mymemory.translated.net/" target="_blank">MyMemory Translation API</a></p>
+        <p style="font-size: 0.8em; opacity: 0.7;">English Dictionary App v2.1.6 | <a href="https://github.com/iambanh2/english-dictionary-app" target="_blank">GitHub</a></p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="/js/Business.js"></script>
+    <script src="/js/DictionaryApp.js?v=2.1.6"></script>
+</body>
+</html>
