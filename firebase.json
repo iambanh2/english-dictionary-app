@@ -5,9 +5,11 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "README.md",
-      "DEPLOY_GUIDE.md",
-      "deploy.sh"
+      "js/**",
+      "*.md",
+      "tsconfig.json",
+      "package.json",
+      "package-lock.json"
     ],
     "rewrites": [
       {
@@ -19,37 +21,17 @@
         "destination": "/html/signin.html"
       },
       {
-        "source": "/signin.html",
-        "destination": "/html/signin.html"
-      },
-      {
         "source": "/register",
         "destination": "/html/register.html"
-      },
-      {
-        "source": "/register.html",
-        "destination": "/html/register.html"
-      },
-      {
-        "source": "/test-avatar",
-        "destination": "/html/test-avatar.html"
-      },
-      {
-        "source": "/test-avatar.html",
-        "destination": "/html/test-avatar.html"
-      },
-      {
-        "source": "**",
-        "destination": "/html/index.html"
       }
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css|html)",
+        "source": "**/*.@(js|css)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "max-age=3600"
+            "value": "max-age=31536000"
           }
         ]
       }

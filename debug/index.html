@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - English Dictionary</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/debug.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Import Map for Firebase modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
+</head>
+<body class="debug-mode">
+    <!-- Debug Header -->
+    <div class="debug-header-banner">
+        🛠️ DEBUG MODE - Testing Environment
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Loading debug environment...</p>
+    </div>
+
+    <!-- Debug Navigation -->
+    <nav class="debug-nav">
+        <div class="container">
+            <h2>Debug Dashboard</h2>
+            <div class="debug-nav-buttons">
+                <button id="debug-btn-anonymous" class="debug-btn active">Anonymous User</button>
+                <button id="debug-btn-authenticated" class="debug-btn">Authenticated User</button>
+                <button id="debug-btn-error" class="debug-btn">Error State</button>
+                <button id="debug-btn-loading" class="debug-btn">Loading State</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="debug-container">
+        <!-- Debug Controls Panel -->
+        <aside class="debug-sidebar">
+            <div class="debug-panel">
+                <h3>🔧 Controls</h3>
+                
+                <div class="debug-section">
+                    <h4>Authentication</h4>
+                    <button id="toggle-auth" class="debug-control-btn">Toggle Auth</button>
+                    <button id="show-user-info" class="debug-control-btn">User Info</button>
+                    <button id="clear-auth" class="debug-control-btn">Clear Auth</button>
+                </div>
+
+                <div class="debug-section">
+                    <h4>Data Simulation</h4>
+                    <button id="load-mock-vocab" class="debug-control-btn">Load Vocabulary</button>
+                    <button id="simulate-search" class="debug-control-btn">Simulate Search</button>
+                    <button id="add-random-word" class="debug-control-btn">Add Random Word</button>
+                </div>
+
+                <div class="debug-section">
+                    <h4>Error Testing</h4>
+                    <button id="network-error" class="debug-control-btn">Network Error</button>
+                    <button id="auth-error" class="debug-control-btn">Auth Error</button>
+                    <button id="permission-error" class="debug-control-btn">Permission Error</button>
+                </div>
+
+                <div class="debug-section">
+                    <h4>Performance</h4>
+                    <button id="performance-test" class="debug-control-btn">Performance Test</button>
+                    <button id="memory-usage" class="debug-control-btn">Memory Usage</button>
+                    <button id="large-dataset" class="debug-control-btn">Large Dataset</button>
+                </div>
+
+                <div class="debug-section">
+                    <h4>Utils</h4>
+                    <button id="export-state" class="debug-control-btn">Export State</button>
+                    <button id="clear-storage" class="debug-control-btn">Clear Storage</button>
+                    <button id="reload-page" class="debug-control-btn">Reload</button>
+                </div>
+            </div>
+
+            <!-- Debug Info Display -->
+            <div class="debug-info-panel">
+                <h3>📊 Debug Info</h3>
+                <div id="debug-info-display">
+                    <pre id="debug-info-content">Click any control to see debug information here...</pre>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main App Preview -->
+        <main class="debug-main">
+            <div class="debug-app-preview">
+                <h3>🖥️ App Preview</h3>
+                
+                <!-- Header Preview -->
+                <header class="preview-header">
+                    <div class="preview-logo">📚 English Dictionary</div>
+                    <div id="preview-auth-section" class="preview-auth">
+                        <!-- Dynamic auth content -->
+                        <div class="auth-loading">Loading...</div>
+                    </div>
+                </header>
+
+                <!-- Main Content Preview -->
+                <div id="preview-main-content" class="preview-content">
+                    <!-- Dynamic main content -->
+                    <div class="preview-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Initializing preview...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Console Output -->
+            <div class="debug-console">
+                <h3>📝 Console Output</h3>
+                <div class="console-controls">
+                    <button id="clear-console" class="debug-btn small">Clear</button>
+                    <button id="export-logs" class="debug-btn small">Export</button>
+                </div>
+                <div id="console-output" class="console-content">
+                    <div class="console-message info">
+                        <span class="timestamp">[${new Date().toISOString()}]</span>
+                        <span class="level">[INFO]</span>
+                        <span class="message">Debug environment initialized</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mock Firebase Object (for testing without real Firebase) -->
+    <script>
+        // Mock Firebase for debug environment
+        window.firebase = {
+            app: { name: 'mock-app' },
+            db: { type: 'mock-firestore' },
+            auth: { type: 'mock-auth' },
+            async getAuthFunctions() {
+                return {
+                    GoogleAuthProvider: class MockGoogleAuthProvider {
+                        addScope() {}
+                    },
+                    signInWithPopup: async () => {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        return {
+                            user: {
+                                uid: 'mock-user-123',
+                                email: 'test@example.com',
+                                displayName: 'Test User',
+                                photoURL: 'https://via.placeholder.com/40'
+                            }
+                        };
+                    },
+                    signOut: async () => {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                };
+            },
+            async getFirestoreFunctions() {
+                return {
+                    collection: () => ({ docs: [] }),
+                    doc: () => ({ data: () => ({}) }),
+                    addDoc: async () => ({ id: 'mock-doc-id' }),
+                    updateDoc: async () => {},
+                    deleteDoc: async () => {}
+                };
+            }
+        };
+    </script>
+
+    <!-- Scripts -->
+    <script type="module" src="js/debug-main.js"></script>
+</body>
+</html>

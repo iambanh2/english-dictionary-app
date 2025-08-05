@@ -1,0 +1,31 @@
+{
+  "name": "english-dictionary-app",
+  "version": "1.0.0",
+  "description": "English-Vietnamese Dictionary Web Application",
+  "main": "js/main/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "dev": "npm run build:watch",
+    "serve": "firebase serve --host 0.0.0.0",
+    "deploy": "npm run build && firebase deploy",
+    "debug": "npm run build && open debug/index.html"
+  },
+  "keywords": [
+    "dictionary",
+    "english",
+    "vietnamese",
+    "vocabulary",
+    "firebase",
+    "typescript"
+  ],
+  "author": "Dictionary App Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "firebase": "^10.0.0"
+  }
+}

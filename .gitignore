@@ -64,6 +64,71 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # dataconnect generated files
 .dataconnect
+
+# TypeScript compiled files and source maps
+*.js.map
+dist/
+build/
+*.tsbuildinfo
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files from TypeScript migration
+*.backup
+*.bak
+*.old
+*.backup.*
+*.bak.*
+js/authen/signin_backup.ts.bak
+js/authen/register_backup.ts.bak
+js/authen/signin_new.ts
+js/authen/register_new.ts
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+tmp/
+temp/
+
+# Cache directories
+.cache/
+.parcel-cache
+.eslintcache
+
+# Test coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Local development
+.local
+
+# Package manager files
+package-lock.json
+yarn.lock
+
+# Version files (optional - uncomment if you don't want to track)
+# version.txt

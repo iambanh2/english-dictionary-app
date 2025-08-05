@@ -1,110 +1,100 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Từ Điển Tiếng Anh</title>
-    <link rel="stylesheet" href="/css/style.css?v=2.1.6">
+    <title>English Dictionary - Modern Learning Platform</title>
+    <link rel="stylesheet" href="css/style-new.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Import Map for Firebase modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
 </head>
 <body>
-    <div class="container">
-        <div class="header-section">
-            <h1>Từ Điển Tiếng Anh</h1>
-            <div class="user-section" id="userSection" style="display: none;">
-                <div class="user-info">
-                    <span id="userDisplayName">👤 Guest</span>
-                    <button id="logoutBtn" class="logout-btn">🚪 Đăng xuất</button>
-                </div>
-            </div>
-            <div class="auth-section" id="authSection">
-                <a href="/signin" class="auth-link">🔐 Đăng nhập</a>
-                <a href="/register" class="auth-link">🚀 Đăng ký</a>
-            </div>
-        </div>
-        <div class="search-section">
-            <div class="search-box">
-                <input type="text" id="wordInput" placeholder="Nhập từ tiếng Anh..." autofocus>
-                <button id="searchBtn">Tra cứu</button>
-            </div>
-        </div>
-
-        <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <p>Đang tra cứu...</p>
-        </div>
-
-        <div id="result" class="result-section hidden">
-            <div class="word-info">
-                <h2 id="wordTitle"></h2>
-                <div class="phonetics">
-                    <div class="phonetic-item">
-                        <span class="phonetic-label">Anh-Anh:</span>
-                        <span id="phoneticUK" class="phonetic-text"></span>
-                        <button id="playUK" class="play-btn" title="Phát âm Anh-Anh">🔊</button>
-                    </div>
-                    <div class="phonetic-item">
-                        <span class="phonetic-label">Anh-Mỹ:</span>
-                        <span id="phoneticUS" class="phonetic-text"></span>
-                        <button id="playUS" class="play-btn" title="Phát âm Anh-Mỹ">🔊</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="meanings-section">
-                <h3>Nghĩa tiếng Việt:</h3>
-                <div id="meanings" class="meanings"></div>
-            </div>
-
-            <div class="english-meanings-section">
-                <h3>Định nghĩa tiếng Anh:</h3>
-                <div id="englishMeanings" class="english-meanings"></div>
-            </div>
-
-            <div class="examples-section">
-                <h3>Ví dụ:</h3>
-                <div id="examples" class="examples"></div>
-            </div>
-
-            <!-- Save Word Section -->
-            <div class="save-section">
-                <button id="saveWordBtn" class="save-btn">💾 Lưu từ này</button>
-                <button id="toggleSavedWords" class="toggle-saved-btn">📚 Từ đã lưu (<span id="savedCount">0</span>)</button>
-            </div>
-        </div>
-
-        <!-- Saved Words Panel -->
-        <div id="savedWordsPanel" class="saved-words-panel hidden">
-            <div class="saved-header">
-                <h3>📚 Từ vựng đã lưu</h3>
-                <button id="closeSavedPanel" class="close-btn">✖</button>
-            </div>
-            <div class="saved-controls">
-                <input type="text" id="searchSaved" placeholder="Tìm kiếm trong từ đã lưu...">
-                <div class="action-buttons">
-                    <button id="exportBtn" class="export-btn">📥 Xuất JSON</button>
-                    <button id="importBtn" class="import-btn">📤 Nhập JSON</button>
-                    <input type="file" id="importFile" accept=".json" style="display:none;">
-                    <button id="clearAllBtn" class="clear-btn">🗑️ Xóa tất cả</button>
-                </div>
-            </div>
-            <div class="storage-info">
-                <span id="storageStatus">📱 Chưa đăng nhập - Dữ liệu lưu trên thiết bị này</span>
-            </div>
-            <div id="savedWordsList" class="saved-words-list"></div>
-        </div>
-
-        <div id="error" class="error-section hidden">
-            <p id="errorMessage"></p>
-        </div>
+    <!-- Loading indicator -->
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Loading your dictionary...</p>
     </div>
 
-    <footer>
-        <p>Sử dụng API từ <a href="https://dictionaryapi.dev/" target="_blank">Free Dictionary API</a> và <a href="https://mymemory.translated.net/" target="_blank">MyMemory Translation API</a></p>
-        <p style="font-size: 0.8em; opacity: 0.7;">English Dictionary App v2.1.6 | <a href="https://github.com/iambanh2/english-dictionary-app" target="_blank">GitHub</a></p>
+    <!-- Error notification area -->
+    <div id="error-notification" class="error-notification" style="display: none;"></div>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>📚 English Dictionary</h1>
+                </div>
+                
+                <div id="auth-section" class="auth-section">
+                    <!-- Dynamic content based on auth state -->
+                    <div class="auth-loading">
+                        <div class="loading-spinner small"></div>
+                        <span>Checking authentication...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+        <div class="container">
+            <!-- Welcome Section -->
+            <section class="welcome-section">
+                <h1 class="welcome-title">Welcome to English Dictionary</h1>
+                <p class="welcome-subtitle">Build your vocabulary, track your progress, and master English with our comprehensive dictionary application.</p>
+                                        <a href="/signin" class="btn-signin">Đăng Nhập</a>
+                        <a href="/register" class="btn-register">Đăng Ký</a>
+            </section>
+
+            <!-- Features Section -->
+            <section id="features" class="features-section">
+                <h2 class="features-title">Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">📖</span>
+                        <h3 class="feature-title">Personal Dictionary</h3>
+                        <p class="feature-description">Build your personal vocabulary collection with words you're learning. Add notes, examples, and track your progress.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <span class="feature-icon">🔍</span>
+                        <h3 class="feature-title">Smart Search</h3>
+                        <p class="feature-description">Quickly find words in your collection with intelligent search that understands context and meaning.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <span class="feature-icon">📊</span>
+                        <h3 class="feature-title">Progress Tracking</h3>
+                        <p class="feature-description">Monitor your learning progress with detailed statistics and insights about your vocabulary growth.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2025 English Dictionary. Built with Firebase and TypeScript for modern learners.</p>
+        </div>
     </footer>
 
-    <!-- Firebase SDK -->
-    <script type="module" src="/js/Business.js"></script>
-    <script src="/js/DictionaryApp.js?v=2.1.6"></script>
+    <!-- Scripts -->
+    <script type="module" src="js-compiled/firebase/firebase-init.js"></script>
+    <script type="module" src="js-compiled/main/index.js"></script>
 </body>
 </html>

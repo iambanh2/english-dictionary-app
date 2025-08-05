@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock User - English Dictionary Debug</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/debug.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Import Map for Firebase modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
+</head>
+<body class="debug-mode authenticated">
+    <!-- Debug Header -->
+    <div class="debug-header-banner">
+        🛠️ DEBUG MODE - Authenticated User Simulation
+    </div>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>📚 English Dictionary</h1>
+                </div>
+                
+                <div class="auth-section">
+                    <div class="user-profile">
+                        <img src="https://via.placeholder.com/40/007bff/white?text=TU" 
+                             alt="User Avatar" 
+                             class="user-avatar">
+                        <div class="user-info">
+                            <span class="user-name">Test User</span>
+                            <div class="dropdown">
+                                <button class="dropdown-toggle" id="user-menu">▼</button>
+                                <div class="dropdown-menu" id="user-dropdown">
+                                    <a href="#" class="dropdown-item">Profile Settings</a>
+                                    <a href="#" class="dropdown-item" id="signout-btn">Sign Out</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard">
+            <div class="welcome-back">
+                <h1>Welcome back, Test User!</h1>
+                <div class="quick-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">5</span>
+                        <span class="stat-label">Total Words</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">3</span>
+                        <span class="stat-label">Learned</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">3</span>
+                        <span class="stat-label">Favorites</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="add-word-btn">
+                        📝 Add New Word
+                    </button>
+                    <button class="btn btn-secondary" id="my-vocabulary-btn">
+                        📚 My Vocabulary
+                    </button>
+                </div>
+                
+                <div class="search-section">
+                    <h3>Search Dictionary</h3>
+                    <div class="search-input-group">
+                        <input type="text" 
+                               id="search-input" 
+                               placeholder="Search for a word..."
+                               class="search-input"
+                               value="">
+                        <button class="btn btn-primary" id="search-btn">Search</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="recent-activity">
+                <h2>Recent Activity</h2>
+                <div class="recent-list">
+                    <div class="recent-item">
+                        <div class="recent-icon">📝</div>
+                        <div class="recent-content">
+                            <span class="recent-action">Added new word: dictionary</span>
+                            <span class="recent-time">2 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="recent-item">
+                        <div class="recent-icon">👁️</div>
+                        <div class="recent-content">
+                            <span class="recent-action">Reviewed word: hello</span>
+                            <span class="recent-time">4 hours ago</span>
+                        </div>
+                    </div>
+                    <div class="recent-item">
+                        <div class="recent-icon">⭐</div>
+                        <div class="recent-content">
+                            <span class="recent-action">Added to favorites: beautiful</span>
+                            <span class="recent-time">1 day ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Debug Controls (Floating) -->
+    <div class="debug-floating-controls">
+        <button id="debug-toggle-state" class="debug-fab">🔄</button>
+        <button id="debug-add-word" class="debug-fab">➕</button>
+        <button id="debug-simulate-search" class="debug-fab">🔍</button>
+        <button id="debug-show-vocab" class="debug-fab">📚</button>
+    </div>
+
+    <!-- Mock Vocabulary Modal -->
+    <div id="vocab-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📚 Mock Vocabulary</h3>
+                <button class="modal-close" id="close-vocab-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="vocab-list" id="vocab-list">
+                    <!-- Mock vocabulary will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mock Add Word Modal -->
+    <div id="add-word-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 Add New Word</h3>
+                <button class="modal-close" id="close-add-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-word-form" class="add-word-form">
+                    <div class="form-group">
+                        <label for="word-input">English Word:</label>
+                        <input type="text" id="word-input" placeholder="Enter English word">
+                    </div>
+                    <div class="form-group">
+                        <label for="meaning-input">Vietnamese Meaning:</label>
+                        <input type="text" id="meaning-input" placeholder="Enter Vietnamese meaning">
+                    </div>
+                    <div class="form-group">
+                        <label for="level-select">Level:</label>
+                        <select id="level-select">
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Word</button>
+                        <button type="button" class="btn btn-secondary" id="cancel-add">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        // Mock Firebase for authenticated state
+        window.firebase = {
+            app: { name: 'mock-app' },
+            db: { type: 'mock-firestore' },
+            auth: { 
+                currentUser: {
+                    uid: 'mock-user-123',
+                    email: 'test@example.com',
+                    displayName: 'Test User',
+                    photoURL: 'https://via.placeholder.com/40/007bff/white?text=TU'
+                },
+                onAuthStateChanged: (callback) => {
+                    callback(window.firebase.auth.currentUser);
+                    return () => {};
+                }
+            },
+            async getAuthFunctions() {
+                return {
+                    signOut: async () => {
+                        window.firebase.auth.currentUser = null;
+                        alert('Mock sign out - would redirect to sign in page');
+                    }
+                };
+            }
+        };
+
+        // Mock vocabulary data
+        const mockVocabulary = [
+            { word: 'hello', meaning: 'xin chào', level: 'beginner', favorite: true },
+            { word: 'goodbye', meaning: 'tạm biệt', level: 'beginner', favorite: false },
+            { word: 'beautiful', meaning: 'đẹp', level: 'intermediate', favorite: true },
+            { word: 'challenge', meaning: 'thử thách', level: 'advanced', favorite: false },
+            { word: 'dictionary', meaning: 'từ điển', level: 'intermediate', favorite: true }
+        ];
+
+        // Setup debug controls
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle auth state
+            document.getElementById('debug-toggle-state').addEventListener('click', () => {
+                window.location.href = '../html/index.html';
+            });
+
+            // Show vocabulary
+            document.getElementById('debug-show-vocab').addEventListener('click', () => {
+                showVocabularyModal();
+            });
+
+            // Add word
+            document.getElementById('debug-add-word').addEventListener('click', () => {
+                showAddWordModal();
+            });
+
+            // Simulate search
+            document.getElementById('debug-simulate-search').addEventListener('click', () => {
+                const searchInput = document.getElementById('search-input');
+                searchInput.value = 'hello';
+                searchInput.focus();
+                alert('Mock search for "hello" - would show search results');
+            });
+
+            // Setup main app functionality
+            setupMainAppFunctionality();
+        });
+
+        function showVocabularyModal() {
+            const modal = document.getElementById('vocab-modal');
+            const vocabList = document.getElementById('vocab-list');
+            
+            vocabList.innerHTML = mockVocabulary.map(word => `
+                <div class="vocab-item">
+                    <div class="vocab-word">${word.word}</div>
+                    <div class="vocab-meaning">${word.meaning}</div>
+                    <div class="vocab-meta">
+                        <span class="vocab-level">${word.level}</span>
+                        ${word.favorite ? '<span class="vocab-favorite">⭐</span>' : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            modal.style.display = 'block';
+        }
+
+        function showAddWordModal() {
+            document.getElementById('add-word-modal').style.display = 'block';
+        }
+
+        function setupMainAppFunctionality() {
+            // Add word button
+            document.getElementById('add-word-btn').addEventListener('click', showAddWordModal);
+
+            // My vocabulary button
+            document.getElementById('my-vocabulary-btn').addEventListener('click', showVocabularyModal);
+
+            // Search functionality
+            document.getElementById('search-btn').addEventListener('click', () => {
+                const query = document.getElementById('search-input').value;
+                if (query) {
+                    alert(`Mock search for "${query}" - would show filtered results`);
+                }
+            });
+
+            // Sign out
+            document.getElementById('signout-btn').addEventListener('click', async () => {
+                const { signOut } = await window.firebase.getAuthFunctions();
+                await signOut();
+            });
+
+            // User dropdown
+            document.getElementById('user-menu').addEventListener('click', () => {
+                document.getElementById('user-dropdown').classList.toggle('show');
+            });
+
+            // Modal close buttons
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.target.closest('.modal').style.display = 'none';
+                });
+            });
+
+            // Add word form
+            document.getElementById('add-word-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const word = document.getElementById('word-input').value;
+                const meaning = document.getElementById('meaning-input').value;
+                
+                if (word && meaning) {
+                    alert(`Mock: Added "${word}" with meaning "${meaning}"`);
+                    document.getElementById('add-word-modal').style.display = 'none';
+                    e.target.reset();
+                }
+            });
+
+            // Close modals when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

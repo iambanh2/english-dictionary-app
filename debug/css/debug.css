@@ -1,0 +1,586 @@
+/* Debug-specific styles */
+.debug-mode {
+    position: relative;
+}
+
+/* Debug header banner */
+.debug-header-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    z-index: 9999;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.debug-mode .main-header {
+    margin-top: 40px;
+}
+
+/* Debug navigation */
+.debug-nav {
+    background: #1a1a1a;
+    color: white;
+    padding: 15px 0;
+    border-bottom: 2px solid #333;
+}
+
+.debug-nav .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.debug-nav h2 {
+    margin: 0;
+    color: #4CAF50;
+    font-size: 20px;
+}
+
+.debug-nav-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.debug-btn {
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.debug-btn:hover {
+    background: #555;
+    border-color: #777;
+}
+
+.debug-btn.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.debug-btn.small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Debug container layout */
+.debug-container {
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 20px;
+    padding: 20px;
+    min-height: calc(100vh - 160px);
+}
+
+/* Debug sidebar */
+.debug-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+.debug-panel {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.debug-panel h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 8px;
+}
+
+.debug-section {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.debug-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.debug-section h4 {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.debug-control-btn {
+    display: block;
+    width: 100%;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.3s ease;
+}
+
+.debug-control-btn:hover {
+    background: #0056b3;
+}
+
+.debug-control-btn:last-child {
+    margin-bottom: 0;
+}
+
+/* Debug info panel */
+.debug-info-panel {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.debug-info-panel h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+#debug-info-display {
+    background: #2d3748;
+    color: #e2e8f0;
+    border-radius: 4px;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#debug-info-content {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+/* Debug main content */
+.debug-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.debug-app-preview {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex: 1;
+}
+
+.debug-app-preview h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 18px;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 10px;
+}
+
+/* Preview header */
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.preview-logo {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.preview-auth {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Preview content */
+.preview-content {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 300px;
+}
+
+.preview-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #6c757d;
+}
+
+/* Debug console */
+.debug-console {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 15px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.debug-console h3 {
+    margin: 0 0 10px 0;
+    color: #4CAF50;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.console-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.console-content {
+    flex: 1;
+    background: #000;
+    color: #00ff00;
+    border-radius: 4px;
+    padding: 10px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.console-message {
+    margin-bottom: 2px;
+    display: flex;
+    gap: 8px;
+}
+
+.console-message .timestamp {
+    color: #666;
+}
+
+.console-message .level {
+    font-weight: bold;
+}
+
+.console-message.info .level {
+    color: #00bcd4;
+}
+
+.console-message.warn .level {
+    color: #ff9800;
+}
+
+.console-message.error .level {
+    color: #f44336;
+}
+
+.console-message.debug .level {
+    color: #9e9e9e;
+}
+
+/* Floating action buttons for mock user page */
+.debug-floating-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.debug-fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.debug-fab:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+/* Modal styles for debug */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+/* Vocabulary list styles */
+.vocab-list {
+    display: grid;
+    gap: 10px;
+}
+
+.vocab-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+.vocab-word {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 16px;
+}
+
+.vocab-meaning {
+    color: #495057;
+    font-size: 14px;
+}
+
+.vocab-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vocab-level {
+    background: #e9ecef;
+    color: #495057;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    text-transform: capitalize;
+}
+
+.vocab-favorite {
+    font-size: 16px;
+}
+
+/* Add word form styles */
+.add-word-form {
+    display: grid;
+    gap: 15px;
+}
+
+.form-group {
+    display: grid;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Responsive design for debug mode */
+@media (max-width: 768px) {
+    .debug-container {
+        flex-direction: column;
+        padding: 10px;
+    }
+    
+    .debug-sidebar {
+        width: 100%;
+    }
+    
+    .debug-nav .container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .debug-nav-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .debug-floating-controls {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .debug-fab {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+    }
+}
+
+/* Authenticated user specific styles */
+.debug-mode.authenticated .user-profile {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.debug-mode.authenticated .user-avatar {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Recent activity styles for mock user */
+.recent-list {
+    display: grid;
+    gap: 10px;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.recent-item:hover {
+    background: #e9ecef;
+}
+
+.recent-icon {
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.recent-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recent-action {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.recent-time {
+    font-size: 12px;
+    color: #6c757d;
+}
