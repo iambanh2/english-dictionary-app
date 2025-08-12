@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Words - English Dictionary</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/words.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Import Map for Firebase modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="words-header-left">
+                    <a href="/category" class="back-categories">← Back to Categories</a>
+                    <a href="/" class="back-home">← Back to Home</a>
+                    <h1 class="page-title" id="page-title">Words in Category</h1>
+                </div>
+                <div class="header-right" id="auth-section">
+                    <!-- User profile will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Category Information Card -->
+            <section class="category-info-section">
+                <div class="category-info-card" id="category-info">
+                    <!-- Category info will be inserted here -->
+                </div>
+            </section>
+
+            <!-- Add New Word Section -->
+            <section class="add-word-section">
+                <button id="add-word-btn" class="add-word-btn">
+                    ➕ Add New Word
+                </button>
+                
+                <!-- Add Word Form (initially hidden) -->
+                <div id="add-word-form" class="add-word-form" style="display: none;">
+                    <div class="form-grid">
+                        <!-- English Word and Lookup -->
+                        <div class="form-row">
+                            <label for="english-word-input" class="form-label">English Word</label>
+                            <div class="input-group">
+                                <input type="text" 
+                                       id="english-word-input" 
+                                       placeholder="Enter English word..."
+                                       class="word-input" required>
+                                <button id="lookup-word-btn" class="lookup-btn" type="button">
+                                    🔍 Look Up & Translate
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Vietnamese Translation (editable) -->
+                        <div class="form-row">
+                            <label for="vietnamese-translation-input" class="form-label">Vietnamese Translation</label>
+                            <input type="text" 
+                                   id="vietnamese-translation-input" 
+                                   placeholder="Vietnamese translation (auto-filled, editable)..."
+                                   class="word-input" required>
+                        </div>
+                        
+                        <!-- British Pronunciation with Audio -->
+                        <div class="form-row">
+                            <label for="british-pronunciation-input" class="form-label">🇬🇧 British Pronunciation</label>
+                            <div class="pronunciation-group">
+                                <input type="text" 
+                                       id="british-pronunciation-input" 
+                                       placeholder="British pronunciation (IPA)..."
+                                       class="word-input" readonly>
+                                <button id="british-audio-btn" class="audio-btn" type="button" style="display: none;">🔊</button>
+                            </div>
+                        </div>
+
+                        <!-- American Pronunciation with Audio -->
+                        <div class="form-row">
+                            <label for="american-pronunciation-input" class="form-label">🇺🇸 American Pronunciation</label>
+                            <div class="pronunciation-group">
+                                <input type="text" 
+                                       id="american-pronunciation-input" 
+                                       placeholder="American pronunciation (IPA)..."
+                                       class="word-input" readonly>
+                                <button id="american-audio-btn" class="audio-btn" type="button" style="display: none;">🔊</button>
+                            </div>
+                        </div>
+
+                        <!-- Australian Pronunciation with Audio (if available) -->
+                        <div class="form-row">
+                            <label for="australian-pronunciation-input" class="form-label">🇦🇺 Australian Pronunciation</label>
+                            <div class="pronunciation-group">
+                                <input type="text" 
+                                       id="australian-pronunciation-input" 
+                                       placeholder="Australian pronunciation (IPA)..."
+                                       class="word-input" readonly>
+                                <button id="australian-audio-btn" class="audio-btn" type="button" style="display: none;">🔊</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Part of Speech -->
+                        <div class="form-row">
+                            <label for="part-of-speech-input" class="form-label">Part of Speech</label>
+                            <input type="text" 
+                                   id="part-of-speech-input" 
+                                   placeholder="Part of speech (noun, verb, adjective...)"
+                                   class="word-input" readonly>
+                        </div>
+                        
+                        <!-- Definition (English) -->
+                        <div class="form-row">
+                            <label for="definition-input" class="form-label">Definition (English)</label>
+                            <textarea id="definition-input" 
+                                      placeholder="Definition in English..."
+                                      class="word-textarea" rows="2" readonly></textarea>
+                        </div>
+                        
+                        <!-- Vietnamese Definition -->
+                        <div class="form-row">
+                            <label for="vietnamese-definition-input" class="form-label">Definition (Vietnamese)</label>
+                            <textarea id="vietnamese-definition-input" 
+                                      placeholder="Vietnamese definition (auto-translated)..."
+                                      class="word-textarea" rows="2" readonly></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button id="save-word-btn" class="save-btn">Save Word</button>
+                            <button id="cancel-word-btn" class="cancel-btn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search Section -->
+            <section class="search-filter-section">
+                <div class="search-controls">
+                    <input type="text" 
+                           id="search-input" 
+                           placeholder="Search words, translations, definitions..."
+                           class="search-input">
+                </div>
+            </section>
+
+            <!-- Words Grid -->
+            <section class="words-section">
+                <div id="words-grid" class="words-grid">
+                    <!-- Word cards will be inserted here -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-icon">📝</div>
+                    <h3>No Words Yet</h3>
+                    <p>Add your first word to this category to start building your vocabulary!</p>
+                    <button class="cta-button" onclick="document.getElementById('add-word-btn').click()">
+                        ➕ Add First Word
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Deletion</h3>
+            </div>
+            <div class="modal-body">
+                <p id="delete-message">Are you sure you want to delete this word?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-delete-btn" class="delete-confirm-btn" 
+                        onclick="wordsManager.confirmDelete()">Delete</button>
+                <button id="cancel-delete-btn" class="modal-cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Loading words...</p>
+    </div>
+
+    <!-- Notification Areas -->
+    <div id="success-notification" class="success-notification" style="display: none;"></div>
+    <div id="error-notification" class="error-notification" style="display: none;"></div>
+
+    <!-- Firebase -->
+    <script type="module" src="../js-compiled/firebase/firebase-init.js"></script>
+    
+    <!-- Main Script -->
+    <script type="module" src="../js-compiled/words/words.js"></script>
+</body>
+</html>

@@ -2,155 +2,233 @@
 
 ## Overview
 
-Trang chủ là điểm khởi đầu của ứng dụng từ điển tiếng Anh - tiếng Việt, hiển thị nội dung khác nhau tùy thuộc vào trạng thái đăng nhập của người dùng.
+Trang chủ là điểm khởi đầu của ứng dụng từ điển tiếng Anh - tiếng Việt. Nội dung và chức năng của trang sẽ thay đổi dựa trên trạng thái đăng nhập của người dùng.
 
-## User States & UI Behavior
+## Page States & Layouts
 
-### 1. Anonymous User (Chưa đăng nhập)
+### 1. 🔒 Anonymous User (Chưa đăng nhập)
 
 #### Header Section
 
-- **Authentication Buttons**:
-  - Vị trí: Góc trên bên phải
-  - Buttons: "Đăng nhập" và "Đăng ký"
-  - Style: Primary button cho "Đăng nhập", Secondary button cho "Đăng ký"
-  - Khi ấn vào nút đăng nhập thì sẽ chuyển qua page signin. Page signin được làm theo yêu cầu của file signin.md
+- **Logo**: "📚 English Dictionary" ở bên trái
+- **Authentication Buttons** (góc trên bên phải):
+  - "Đăng nhập" button (primary style) → Navigate to `/signin`
+  - "Đăng ký" button (secondary style) → Navigate to `/register`
 
 #### Main Content Area
 
-- **Welcome Section**:
-  - Hiển thị text "Welcome to English Dictionary"
-  - Subtitle: "Sign in to start building your vocabulary"
-  - Optional: Brief description về tính năng của app
-- **Call-to-Action**: Button "Get Started" dẫn đến trang đăng nhập
-- **Features Preview** (Optional):
-  - Showcase các tính năng chính sẽ có sau khi đăng nhập
-  - Screenshots hoặc icons minh họa
+- **Hero Section**:
+
+  - Title: "Welcome to English Dictionary"
+  - Subtitle: "Build your vocabulary, track your progress, and master English"
+  - Call-to-Action: "Get Started" button → Navigate to `/signin`
+
+- **Features Preview**:
+  - Personal Dictionary: "Build your personal vocabulary collection"
+  - Smart Search: "Quickly find words in your collection"
+  - Progress Tracking: "Monitor your learning progress"
 
 #### Restrictions
 
-- Không hiển thị dictionary features
-- Không có search functionality
-- Chỉ có thể xem landing page content
+- ❌ Không hiển thị dictionary functionality
+- ❌ Không có search features
+- ❌ Chỉ có thể xem landing page content
 
-### 2. Authenticated User (Đã đăng nhập qua Firebase Auth)
+### 2. ✅ Authenticated User (Đã đăng nhập qua Firebase Auth)
 
 #### Header Section
 
-- **User Profile Area** (Góc trên bên phải):
-  - Avatar từ Google account
-  - Display name từ Google profile
-  - Dropdown menu với options:
-    - "Profile Settings"
-    - "Sign Out"
+- **Logo**: "📚 English Dictionary" ở bên trái
+- **User Profile** (góc trên bên phải):
+  - User name với emoji: "👋 [Display Name]"
+  - "Sign Out" button
 
 #### Main Content Area
 
-- **Dashboard Overview**:
-  - Welcome message với tên user: "Welcome back, [User Name]!"
-  - Quick stats: Số từ đã học, từ yêu thích, etc.
-- **Quick Actions**:
-  - "Add New Word" button
-  - "Search Dictionary" input field
-  - "My Vocabulary" link
-- **Recent Activity**:
-  - Danh sách từ vừa thêm gần đây
-  - Từ đã search gần đây
+##### Dashboard Overview
 
-## Page Components Structure
-
-### HTML Structure (`html/index.html`)
-
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>English Dictionary</title>
-    <link rel="stylesheet" href="../css/style.css" />
-  </head>
-  <body>
-    <header class="main-header">
-      <div class="logo">English Dictionary</div>
-      <div id="auth-section">
-        <!-- Dynamic content based on auth state -->
-      </div>
-    </header>
-
-    <main id="main-content">
-      <!-- Dynamic content based on auth state -->
-    </main>
-
-    <script src="../js/main/index.js"></script>
-  </body>
-</html>
+```
+Welcome back, [User Name]! 👋
+Continue building your vocabulary and track your learning progress.
 ```
 
-### CSS Requirements (`css/style.css`)
+##### Your Progress Cards
 
-- **Responsive design**: Mobile-first approach
-- **Theme colors**: Định nghĩa color scheme nhất quán
-- **Typography**: Font family và sizes hierarchy
-- **Component styles**: Button styles, card layouts, etc.
+- **Total Words**:
 
-### TypeScript Implementation (`js/main/index.ts`)
+  - Icon: 📊
+  - Value: số từ trong collection
+  - Label: "Words in your collection"
 
-#### Class Structure
+- **Learned**:
+
+  - Icon: ✅
+  - Value: số từ đã học
+  - Label: "Words mastered"
+
+- **Favorites**:
+  - Icon: ⭐
+  - Value: số từ yêu thích
+  - Label: "Favorite words"
+
+##### Quick Actions Section
+
+- **Add New Word**:
+
+  - Icon: 📝
+  - Description: "Add a new word to your personal dictionary"
+  - Action: Click → Navigate to Add Word page
+
+- **My Categories**:
+
+  - Icon: 📚
+  - Description: "Browse and manage your word categories"
+  - Action: Click → Navigate to `/category` (Category.md)
+
+- **Practice**:
+  - Icon: 🎯
+  - Description: "Test your knowledge with vocabulary exercises"
+  - Action: Click → Navigate to Practice page
+
+##### Search Dictionary
+
+- **Search Input**: "Search for a word or phrase..."
+- **Search Button**: Trigger search functionality
+
+## User Interactions & Navigation Flow
+
+### Authentication Flow
+
+```
+Landing Page (Anonymous)
+→ Click "Đăng nhập"
+→ Navigate to /signin
+→ User signs in successfully
+→ Redirect back to / (Main page)
+→ Now shows Authenticated content
+```
+
+### Category Navigation
+
+```
+Main Page (Authenticated)
+→ Click "My Categories" in Quick Actions
+→ Navigate to /category
+→ User can manage categories
+→ Click "Back to Home"
+→ Return to Main Page
+```
+
+### Word Management Flow
+
+```
+Main Page → "Add New Word" → Add Word page
+Main Page → "Search Dictionary" → Search results
+Main Page → "Practice" → Practice/Quiz page
+```
+
+## Technical Implementation
+
+### File Structure
+
+- **HTML**: `html/index.html`
+- **CSS**: `css/style-new.css` (modern design)
+- **TypeScript**: `js/main/index.ts`
+
+### Core Classes
 
 ```typescript
 class MainPageController {
   private authManager: AuthManager;
   private logger: Logger;
+  private signOut: SignOut;
 
-  constructor() {
-    this.authManager = new AuthManager();
-    this.logger = new Logger("MainPageController");
-  }
-
-  async initialize(): Promise<void> {
-    // Check auth state and render appropriate content
-  }
-
-  private renderAnonymousContent(): void {
-    // Render content for non-authenticated users
-  }
-
-  private renderAuthenticatedContent(user: User): void {
-    // Render content for authenticated users
-  }
+  // Main methods
+  async initialize(): Promise<void>;
+  private setupAuthStateListener(): void;
+  private renderAnonymousContent(): void;
+  private renderAuthenticatedContent(user: any): void;
+  private renderAuthenticatedMainContent(user: any): void;
 }
 ```
 
-## Authentication Flow Integration
+### Authentication State Management
 
-### Initial Page Load
+```typescript
+// Listen for auth state changes
+this.authManager.onAuthStateChanged((user) => {
+  if (user) {
+    this.renderAuthenticatedContent(user);
+  } else {
+    this.renderAnonymousContent();
+  }
+});
+```
 
-1. Check Firebase Auth state
-2. If authenticated:
-   - Load user profile
-   - Render authenticated UI
-   - Initialize dictionary features
-3. If not authenticated:
-   - Render anonymous UI
-   - Setup sign-in event listeners
+### Data Integration
 
-### Auth State Changes
+- **Firebase Auth**: User authentication state
+- **Firestore**: User's vocabulary data, categories, progress
+- **Real-time Updates**: Listen for data changes
 
-- Listen for Firebase auth state changes
-- Dynamically update UI without page refresh
-- Handle sign-in/sign-out transitions smoothly
+## UI/UX Design Requirements
 
-## Future Enhancements (Post-Authentication)
+### Design System
 
-- Dictionary search functionality
-- Word management (add/edit/delete)
-- Personal vocabulary lists
-- Study modes and quizzes
-- Progress tracking
-- Offline capabilities
+- **Colors**: Modern gradient backgrounds, glass-morphism effects
+- **Typography**: Inter font family, clear hierarchy
+- **Components**: Card-based layouts, smooth transitions
+- **Responsive**: Mobile-first design
+
+### Interactive Elements
+
+- **Hover Effects**: Buttons và cards có hover animations
+- **Loading States**: Spinner khi đang load data
+- **Error Handling**: User-friendly error messages
+- **Success Feedback**: Confirmation messages cho user actions
+
+### Accessibility
+
+- **ARIA Labels**: Proper accessibility labels
+- **Keyboard Navigation**: Support keyboard shortcuts
+- **Screen Reader**: Compatible với screen readers
+
+## Data Structure & Firebase Integration
+
+### User Progress Data
+
+```typescript
+interface UserProgress {
+  totalWords: number;
+  learnedWords: number;
+  favoriteWords: number;
+  categoriesCount: number;
+  lastActive: Date;
+}
+```
+
+### Firestore Collections
+
+```
+users/{userId}/
+├── profile/
+├── categories/
+├── words/
+└── progress/
+```
+
+## Future Features (Roadmap)
+
+- 🔮 **Advanced Search**: Filter by category, date
+- 🎮 **Gamification**: Points, badges, streaks
+- 📱 **Mobile App**: React Native version
+- 🌙 **Dark Mode**: Theme switching
+- 🔄 **Offline Mode**: PWA capabilities
+- 📊 **Analytics**: Detailed learning analytics
 
 ## Technical Notes
 
-- File location: `html/index.html`
-- CSS file: `css/style.css`
-- TypeScript: `js/main/index.ts`
-- Dependencies: Firebase Auth, Logger utility
+- **Authentication**: Firebase Auth (Google OAuth + Email/Password)
+- **Database**: Firestore for user data
+- **Hosting**: Firebase Hosting với clean URLs
+- **Build System**: TypeScript compilation với npm scripts

@@ -182,10 +182,10 @@ class MainPageController {
                                 <p class="feature-description">Add a new word to your personal dictionary with meaning and examples.</p>
                             </div>
                             
-                            <div class="feature-card" style="cursor: pointer;" id="my-vocabulary-btn">
+                            <div class="feature-card" style="cursor: pointer;" id="my-categories-btn">
                                 <span class="feature-icon">📚</span>
-                                <h3 class="feature-title">My Vocabulary</h3>
-                                <p class="feature-description">Browse and manage your personal word collection.</p>
+                                <h3 class="feature-title">My Categories</h3>
+                                <p class="feature-description">Browse and manage your word categories.</p>
                             </div>
                             
                             <div class="feature-card" style="cursor: pointer;" id="practice-btn">
@@ -237,13 +237,13 @@ class MainPageController {
                 alert('Add word feature coming soon!');
             });
         }
-        // My vocabulary button
-        const myVocabBtn = document.getElementById('my-vocabulary-btn');
-        if (myVocabBtn) {
-            myVocabBtn.addEventListener('click', () => {
-                this.logger.info('My vocabulary button clicked');
-                // TODO: Implement vocabulary view
-                alert('My vocabulary feature coming soon!');
+        // My Categories button
+        const myCategoriesBtn = document.getElementById('my-categories-btn');
+        if (myCategoriesBtn) {
+            myCategoriesBtn.addEventListener('click', () => {
+                this.logger.info('My categories button clicked');
+                // Navigate to category page
+                window.location.href = '/category';
             });
         }
         // Practice button

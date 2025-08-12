@@ -1,4 +1,8 @@
 {
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
   "hosting": {
     "public": ".",
     "ignore": [
@@ -9,7 +13,9 @@
       "*.md",
       "tsconfig.json",
       "package.json",
-      "package-lock.json"
+      "package-lock.json",
+      "requirements/**",
+      "scripts/**"
     ],
     "rewrites": [
       {
@@ -23,6 +29,14 @@
       {
         "source": "/register",
         "destination": "/html/register.html"
+      },
+      {
+        "source": "/category",
+        "destination": "/html/category.html"
+      },
+      {
+        "source": "/words",
+        "destination": "/html/words.html"
       }
     ],
     "headers": [

@@ -7,8 +7,15 @@
     --secondary-color: #f59e0b;
     --accent-color: #06b6d4;
     --success-color: #10b981;
+    --success-dark: #059669;
     --warning-color: #f59e0b;
     --error-color: #ef4444;
+    --danger-color: #ef4444;
+    --danger-dark: #dc2626;
+    
+    /* RGB values for alpha usage */
+    --primary-color-rgb: 99, 102, 241;
+    --danger-color-rgb: 239, 68, 68;
     
     /* Neutral colors */
     --gray-50: #f9fafb;
