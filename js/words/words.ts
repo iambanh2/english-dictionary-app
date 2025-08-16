@@ -406,7 +406,7 @@ class WordsManager {
     }
 
     /**
-     * Play audio pronunciation by accent
+     * Play audio pronunciation with syllable highlighting
      */
     async playAudioPronunciation(audioUrl: string, accent: 'british' | 'american' | 'australian' = 'british'): Promise<void> {
         try {
@@ -415,26 +415,71 @@ class WordsManager {
                 return;
             }
             
+            // Get the word and IPA pronunciation being pronounced
+            const englishWordInput = document.getElementById('english-word-input') as HTMLInputElement;
+            const wordCard = document.querySelector(`[onclick*="${audioUrl}"]`)?.closest('.word-card');
+            const currentWord = englishWordInput?.value || wordCard?.querySelector('.english-word')?.textContent || '';
+            
+            // Get IPA pronunciation based on accent
+            let ipaPronunciation = '';
+            if (accent === 'british') {
+                ipaPronunciation = (document.getElementById('british-pronunciation-input') as HTMLInputElement)?.value ||
+                                  wordCard?.querySelector('.uk-pronunciation')?.textContent?.replace('🇬🇧', '').trim() || '';
+            } else if (accent === 'american') {
+                ipaPronunciation = (document.getElementById('american-pronunciation-input') as HTMLInputElement)?.value ||
+                                  wordCard?.querySelector('.us-pronunciation')?.textContent?.replace('🇺🇸', '').trim() || '';
+            } else if (accent === 'australian') {
+                ipaPronunciation = (document.getElementById('australian-pronunciation-input') as HTMLInputElement)?.value ||
+                                  wordCard?.querySelector('.au-pronunciation')?.textContent?.replace('🇦🇺', '').trim() || '';
+            }
+            
             if (this.audioPlayer) {
-                this.audioPlayer.src = audioUrl;
-                await this.audioPlayer.play();
-                this.logger.info('Audio pronunciation played', { audioUrl, accent });
-                this.showSuccess(`🔊 Playing ${accent} pronunciation...`);
+                // Show IPA pronunciation breakdown FIRST
+                this.showIPABreakdown(currentWord, ipaPronunciation, accent);
+                
+                // Wait a bit for the modal to fully appear before playing audio
+                setTimeout(async () => {
+                    try {
+                        this.audioPlayer!.src = audioUrl;
+                        await this.audioPlayer!.play();
+                        this.logger.info('Audio pronunciation played', { audioUrl, accent });
+                        this.showSuccess(`🔊 Playing ${accent} pronunciation...`);
+                    } catch (playError: any) {
+                        this.logger.error('Failed to play audio after showing modal', { error: playError.message });
+                        this.fallbackTextToSpeechWithIPA(currentWord, accent);
+                    }
+                }, 500); // 500ms delay to let modal appear smoothly
             }
         } catch (error: any) {
             this.logger.error('Failed to play audio', { error: error.message, audioUrl, accent });
-            // Fallback to text-to-speech
-            this.fallbackTextToSpeech(audioUrl, accent);
+            // Fallback to text-to-speech with IPA display
+            const englishWordInput = document.getElementById('english-word-input') as HTMLInputElement;
+            const wordCard = document.querySelector(`[onclick*="${audioUrl}"]`)?.closest('.word-card');
+            const currentWord = englishWordInput?.value || wordCard?.querySelector('.english-word')?.textContent || '';
+            this.fallbackTextToSpeechWithIPA(currentWord, accent);
         }
     }
 
     /**
-     * Fallback text-to-speech when audio fails
+     * Fallback text-to-speech with IPA display
      */
-    private fallbackTextToSpeech(text: string, accent: 'british' | 'american' | 'australian'): void {
+    private fallbackTextToSpeechWithIPA(word: string, accent: 'british' | 'american' | 'australian'): void {
         try {
             if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
+                // Get IPA pronunciation for display
+                let ipaPronunciation = '';
+                if (accent === 'british') {
+                    ipaPronunciation = (document.getElementById('british-pronunciation-input') as HTMLInputElement)?.value || '';
+                } else if (accent === 'american') {
+                    ipaPronunciation = (document.getElementById('american-pronunciation-input') as HTMLInputElement)?.value || '';
+                } else if (accent === 'australian') {
+                    ipaPronunciation = (document.getElementById('australian-pronunciation-input') as HTMLInputElement)?.value || '';
+                }
+                
+                // Show IPA breakdown for TTS
+                this.showIPABreakdown(word, ipaPronunciation, accent);
+                
+                const utterance = new SpeechSynthesisUtterance(word);
                 
                 // Set voice based on accent
                 const voices = speechSynthesis.getVoices();
@@ -462,6 +507,10 @@ class WordsManager {
                     utterance.voice = selectedVoice;
                 }
                 
+                // Slower rate for better comprehension
+                utterance.rate = 0.7;
+                utterance.pitch = 1.0;
+                
                 speechSynthesis.speak(utterance);
                 this.showSuccess(`🗣️ Using text-to-speech for ${accent} pronunciation`);
             } else {
@@ -470,6 +519,165 @@ class WordsManager {
         } catch (error: any) {
             this.logger.error('Text-to-speech failed', { error: error.message });
             this.showError('Failed to play pronunciation');
+        }
+    }
+
+    /**
+     * Show IPA pronunciation breakdown with beautiful styling
+     */
+    private showIPABreakdown(word: string, ipaPronunciation: string, accent: string): void {
+        if (!word && !ipaPronunciation) return;
+        
+        // Break IPA into segments for better visualization
+        const ipaSegments = this.breakIPAIntoSegments(ipaPronunciation || word);
+        
+        // Create or update IPA display
+        let ipaDisplay = document.getElementById('ipa-display');
+        if (!ipaDisplay) {
+            ipaDisplay = document.createElement('div');
+            ipaDisplay.id = 'ipa-display';
+            ipaDisplay.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.98);
+                color: #1e293b;
+                padding: 30px 40px;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+                z-index: 2000;
+                font-size: 28px;
+                font-weight: 500;
+                text-align: center;
+                backdrop-filter: blur(15px);
+                border: 2px solid #e2e8f0;
+                min-width: 300px;
+                font-family: 'Times New Roman', serif;
+            `;
+            document.body.appendChild(ipaDisplay);
+        }
+        
+        // Display word, IPA and accent info with beautiful white styling
+        ipaDisplay.innerHTML = `
+            <div style="font-size: 16px; color: #64748b; margin-bottom: 15px; font-weight: 400;">
+                ${this.getAccentFlag(accent)} ${accent.toUpperCase()} Pronunciation
+            </div>
+            <div style="font-size: 22px; color: #374151; margin-bottom: 10px; font-weight: 600;">
+                "${word}"
+            </div>
+            <div id="ipa-text" style="letter-spacing: 3px; margin: 20px 0; font-size: 32px;">
+                ${ipaSegments.map((segment, index) => 
+                    `<span id="ipa-segment-${index}" style="opacity: 0.4; transition: all 0.4s ease; padding: 0 2px; color: #1e293b;">${segment}</span>`
+                ).join('')}
+            </div>
+            <div style="font-size: 14px; color: #9ca3af; margin-top: 15px; font-weight: 400;">
+                🎵 Listen to the pronunciation sounds
+            </div>
+        `;
+        
+        // Animate IPA segments
+        this.animateIPASegments(ipaSegments);
+        
+        // Auto-hide after duration
+        setTimeout(() => {
+            if (ipaDisplay && ipaDisplay.parentNode) {
+                ipaDisplay.style.animation = 'fadeOut 0.4s ease';
+                setTimeout(() => {
+                    if (ipaDisplay && ipaDisplay.parentNode) {
+                        ipaDisplay.parentNode.removeChild(ipaDisplay);
+                    }
+                }, 400);
+            }
+        }, Math.max(3000, ipaSegments.length * 1000)); // Longer display time
+    }
+
+    /**
+     * Break IPA pronunciation into meaningful segments
+     */
+    private breakIPAIntoSegments(ipa: string): string[] {
+        if (!ipa) return [];
+        
+        // Clean up IPA string
+        const cleanIPA = ipa.replace(/[\/\[\]]/g, '').trim();
+        if (!cleanIPA) return [];
+        
+        // Split by common IPA boundaries
+        const segments: string[] = [];
+        let currentSegment = '';
+        
+        for (let i = 0; i < cleanIPA.length; i++) {
+            const char = cleanIPA[i];
+            
+            // IPA stress markers and syllable boundaries
+            if (char === 'ˈ' || char === 'ˌ' || char === '.') {
+                if (currentSegment) {
+                    segments.push(currentSegment);
+                    currentSegment = '';
+                }
+                if (char !== '.') currentSegment += char; // Include stress markers
+            } else if (char === ' ') {
+                if (currentSegment) {
+                    segments.push(currentSegment);
+                    currentSegment = '';
+                }
+            } else {
+                currentSegment += char;
+            }
+        }
+        
+        if (currentSegment) {
+            segments.push(currentSegment);
+        }
+        
+        return segments.length > 0 ? segments : [cleanIPA];
+    }
+
+    /**
+     * Animate IPA segments with highlighting
+     */
+    private animateIPASegments(segments: string[]): void {
+        segments.forEach((segment, index) => {
+            setTimeout(() => {
+                const segmentEl = document.getElementById(`ipa-segment-${index}`);
+                if (segmentEl) {
+                    // Highlight current segment with blue color for white background
+                    segmentEl.style.cssText = `
+                        opacity: 1;
+                        color: #2563eb;
+                        text-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+                        transform: scale(1.2);
+                        transition: all 0.4s ease;
+                        padding: 0 2px;
+                        background: rgba(37, 99, 235, 0.1);
+                        border-radius: 4px;
+                    `;
+                    
+                    // Fade previous segments to grey
+                    for (let j = 0; j < index; j++) {
+                        const prevEl = document.getElementById(`ipa-segment-${j}`);
+                        if (prevEl) {
+                            prevEl.style.opacity = '0.7';
+                            prevEl.style.color = '#6b7280';
+                            prevEl.style.transform = 'scale(1)';
+                            prevEl.style.textShadow = 'none';
+                            prevEl.style.background = 'transparent';
+                        }
+                    }
+                }
+            }, index * 800); // 800ms per segment
+        });
+    }
+
+    /**
+     * Get accent flag emoji
+     */
+    private getAccentFlag(accent: string): string {
+        switch (accent) {
+            case 'british': return '🇬🇧';
+            case 'american': return '🇺🇸';
+            case 'australian': return '🇦🇺';
+            default: return '🔊';
         }
     }
 
@@ -650,6 +858,12 @@ class WordsManager {
                     englishWordInput?.focus();
                 }
             });
+        }
+
+        // Print words button
+        const printBtn = document.getElementById('print-words-btn');
+        if (printBtn) {
+            printBtn.addEventListener('click', () => this.printWordsList());
         }
 
         // Dictionary lookup
@@ -1247,6 +1461,236 @@ class WordsManager {
         
         delete (window as any).currentAudioUrl;
         delete (window as any).currentAudioUrls;
+    }
+
+    /**
+     * Print words list for the current category
+     */
+    private printWordsList(): void {
+        try {
+            console.log('Print button clicked!');
+            
+            // Get current category info
+            const categoryName = this.category?.name || 'Unknown Category';
+            const categoryDescription = this.category?.description || '';
+            
+            console.log('Category info:', { categoryName, categoryDescription });
+            console.log('Current category object:', this.category);
+            console.log('All words:', this.words);
+            
+            // Filter words based on current search/filter
+            const filteredWords = this.getFilteredWords();
+            
+            console.log('Filtered words:', filteredWords);
+            console.log('Filtered words count:', filteredWords.length);
+            
+            if (filteredWords.length === 0) {
+                console.log('No words found - showing alert');
+                // Create a simple message for print
+                const printContent = `
+                    <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
+                        <h2>📚 ${categoryName} - Word List</h2>
+                        <p style="color: #666; font-size: 14pt; margin: 20px 0;">
+                            No words available for printing.<br>
+                            Please add some words to this category first.
+                        </p>
+                        <p style="color: #999; font-size: 12pt;">
+                            Generated on ${new Date().toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long', 
+                                day: 'numeric'
+                            })}
+                        </p>
+                    </div>
+                `;
+                
+                // Create print container
+                let printContainer = document.getElementById('print-content');
+                if (!printContainer) {
+                    printContainer = document.createElement('div');
+                    printContainer.id = 'print-content';
+                    document.body.appendChild(printContainer);
+                }
+                
+                printContainer.innerHTML = printContent;
+                
+                // Show preview and ask user
+                const proceed = confirm('No words found in this category. Do you still want to print an empty list?');
+                if (proceed) {
+                    window.print();
+                } else {
+                    printContainer.remove();
+                }
+                return;
+            }
+
+            // Create print content
+            const printContent = this.generatePrintContent(categoryName, categoryDescription, filteredWords);
+            
+            console.log('Generated print content:', printContent);
+            
+            // Create or update print container
+            let printContainer = document.getElementById('print-content');
+            if (!printContainer) {
+                printContainer = document.createElement('div');
+                printContainer.id = 'print-content';
+                document.body.appendChild(printContainer);
+                console.log('Created new print container');
+            } else {
+                console.log('Using existing print container');
+            }
+            
+            printContainer.innerHTML = printContent;
+            console.log('Set print container innerHTML');
+            
+            // Show preview for debugging (temporary - remove after testing)
+            const showPreview = confirm(`Found ${filteredWords.length} words to print. Show preview first?`);
+            
+            if (showPreview) {
+                // Debug: Show print content temporarily
+                printContainer.style.display = 'block';
+                printContainer.style.position = 'fixed';
+                printContainer.style.top = '10px';
+                printContainer.style.left = '10px';
+                printContainer.style.zIndex = '9999';
+                printContainer.style.background = 'white';
+                printContainer.style.border = '2px solid red';
+                printContainer.style.padding = '20px';
+                printContainer.style.maxHeight = '400px';
+                printContainer.style.overflow = 'auto';
+                printContainer.style.width = '80%';
+                
+                console.log('Made print container visible for debugging');
+                
+                // Ask user if they want to proceed with print
+                setTimeout(() => {
+                    const proceed = confirm('Print content is ready. Do you want to print now?');
+                    if (proceed) {
+                        // Reset styles for print
+                        printContainer.style.display = '';
+                        printContainer.style.position = '';
+                        printContainer.style.top = '';
+                        printContainer.style.left = '';
+                        printContainer.style.zIndex = '';
+                        printContainer.style.background = '';
+                        printContainer.style.border = '';
+                        printContainer.style.padding = '';
+                        printContainer.style.maxHeight = '';
+                        printContainer.style.overflow = '';
+                        printContainer.style.width = '';
+                        
+                        // Trigger print
+                        window.print();
+                    } else {
+                        printContainer.remove();
+                    }
+                }, 1000);
+            } else {
+                // Direct print
+                window.print();
+            }
+            
+            this.logger.info('Print triggered for words list', { 
+                categoryName, 
+                wordCount: filteredWords.length 
+            });
+            
+        } catch (error: any) {
+            console.error('Print error:', error);
+            this.logger.error('Failed to print words list', { error: error?.message });
+            alert('Failed to generate print list. Please try again.');
+        }
+    }
+
+    /**
+     * Generate HTML content for printing
+     */
+    private generatePrintContent(categoryName: string, categoryDescription: string, words: Word[]): string {
+        const currentDate = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long', 
+            day: 'numeric'
+        });
+
+        let html = `
+            <div class="print-header">
+                <div class="print-title">📚 ${categoryName} - Word List</div>
+                <div class="print-subtitle">${categoryDescription}</div>
+                <div class="print-subtitle">Generated on ${currentDate} | Total: ${words.length} words</div>
+            </div>
+            
+            <div class="print-word-list">
+        `;
+
+        words.forEach((word, index) => {
+            // Clean up pronunciations - remove /.../ brackets if present
+            const cleanUS = word.americanPronunciation?.replace(/^\/|\/$/g, '') || 'N/A';
+            const cleanUK = word.britishPronunciation?.replace(/^\/|\/$/g, '') || 'N/A';
+            
+            // Part of speech mapping
+            const posMapping: { [key: string]: string } = {
+                'noun': 'n.',
+                'verb': 'v.',
+                'adjective': 'adj.',
+                'adverb': 'adv.',
+                'preposition': 'prep.',
+                'conjunction': 'conj.',
+                'interjection': 'interj.',
+                'pronoun': 'pron.',
+                'determiner': 'det.'
+            };
+            
+            const shortPos = posMapping[word.partOfSpeech?.toLowerCase()] || word.partOfSpeech || 'N/A';
+
+            // Use simple div structure instead of list
+            html += `
+                <div class="print-word-item">
+                    <span class="print-word">${index + 1}. ${word.englishWord}</span>
+                    <span class="print-pronunciation">🇺🇸 /${cleanUS}/</span>
+                    <span class="print-pronunciation">🇬🇧 /${cleanUK}/</span>
+                    <span class="print-translation">${word.vietnameseTranslation}</span>
+                    <span class="print-pos">(${shortPos})</span>
+                </div>
+            `;
+        });
+
+        html += `
+            </div>
+        `;
+
+        return html;
+    }
+
+    /**
+     * Get filtered words based on current search and filter settings
+     */
+    private getFilteredWords(): Word[] {
+        const searchInput = document.getElementById('search-input') as HTMLInputElement;
+        const filterSelect = document.getElementById('filter-select') as HTMLSelectElement;
+        
+        let filteredWords = [...this.words];
+        
+        // Apply search filter
+        if (searchInput?.value?.trim()) {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            filteredWords = filteredWords.filter(word => 
+                word.englishWord.toLowerCase().includes(searchTerm) ||
+                word.vietnameseTranslation.toLowerCase().includes(searchTerm) ||
+                word.partOfSpeech.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Apply part of speech filter
+        if (filterSelect?.value && filterSelect.value !== 'all') {
+            filteredWords = filteredWords.filter(word => 
+                word.partOfSpeech.toLowerCase() === filterSelect.value.toLowerCase()
+            );
+        }
+        
+        // Sort alphabetically by English word
+        filteredWords.sort((a, b) => a.englishWord.localeCompare(b.englishWord));
+        
+        return filteredWords;
     }
 
     /**
