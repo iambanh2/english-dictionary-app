@@ -1,4 +1,5 @@
 import Logger from '../common/logger.js';
+import HttpClient from '../common/http-client.js';
 import AuthManager from '../auth/auth-manager.js';
 import { 
     getFirestore, 
@@ -41,23 +42,35 @@ interface Word {
     userId: string;
 }
 
-/**
- * Dictionary API Response interface
- */
-interface DictionaryAPIResponse {
+// New: Cambridge Dictionary API (backend) response types
+interface CambridgePronunciation {
+    pos: string; // part of speech group in which this pron belongs
+    lang: string; // e.g. "UK", "US"
+    url: string;  // absolute audio URL
+    pron: string; // IPA text, e.g. /kæt/
+}
+
+interface CambridgeExample {
+    id: number;
+    text: string;
+    translation?: string;
+}
+
+interface CambridgeDefinitionBlock {
+    id: number;
+    pos: string;       // part of speech for this definition
+    source?: string;   // data-id from page
+    text: string;      // English definition
+    translation?: string; // (when present on bilingual pages)
+    example: CambridgeExample[];
+}
+
+interface CambridgeAPIResponse {
     word: string;
-    phonetics: {
-        text: string;
-        audio: string;
-        sourceUrl?: string; // Nguồn âm thanh
-    }[];
-    meanings: {
-        partOfSpeech: string;
-        definitions: {
-            definition: string;
-            example?: string;
-        }[];
-    }[];
+    pos: string[]; // unique parts of speech present on the page
+    verbs: { id: number; type: string; text: string; }[]; // from Simple Wiktionary
+    pronunciation: CambridgePronunciation[]; // UK/US audio & IPA
+    definition: CambridgeDefinitionBlock[];  // list of definitions
 }
 
 /**
@@ -89,6 +102,7 @@ interface Category {
  */
 class WordsManager {
     private logger: Logger;
+    private httpClient: HttpClient;
     private authManager: AuthManager;
     private db: any;
     private currentUser: any = null;
@@ -102,53 +116,199 @@ class WordsManager {
 
     constructor() {
         this.logger = new Logger('WordsManager');
+        this.httpClient = new HttpClient({
+            timeout: 30000, // 30 seconds
+            headers: {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9,vi;q=0.8'
+                // Note: Cache-Control and Pragma headers removed for better CORS proxy compatibility
+            }
+        });
         this.authManager = new AuthManager();
         this.db = getFirestore();
         this.setupNetworkListener();
         this.audioPlayer = new Audio();
-        this.logger.info('WordsManager initialized');
+        this.logger.info('WordsManager initialized with HTTP client (CORS proxy fallback)');
     }
 
     /**
-     * Look up word in Dictionary API
+     * Look up word via Cambridge website using HTTP client with CORS proxy fallback
+     * Falls back to local API if browser blocks by CORS.
      */
-    async lookupWordInDictionary(word: string): Promise<DictionaryAPIResponse | null> {
+    async lookupWordInDictionary(word: string): Promise<CambridgeAPIResponse | null> {
+        const langSlug: 'en' | 'uk' | 'en-tw' | 'en-cn' = (window as any).__DICT_LANG || 'en';
         try {
-            this.logger.info('Looking up word in dictionary API', { word });
-            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-            
-            if (!response.ok) {
-                throw new Error(`Dictionary API error: ${response.status}`);
+            const { nation, languagePath } = this.mapCambridgeLang(langSlug);
+            const pageUrl = `https://dictionary.cambridge.org/${nation}/dictionary/${languagePath}/${encodeURIComponent(word)}`;
+            this.logger.info('Fetching Cambridge page with HTTP client', { pageUrl, langSlug });
+
+            // Try with CORS proxy fallback
+            const html = await this.httpClient.getHtmlWithProxy(pageUrl);
+            const parsed = this.parseCambridgeHtml(html);
+
+            // Best-effort fetch of verb forms from Simple Wiktionary
+            try {
+                const verbs = await this.fetchVerbsFromWiktionary(word);
+                parsed.verbs = verbs;
+            } catch (e: any) {
+                this.logger.warn('Fetch verbs failed (non-fatal)', { error: e?.message });
+                parsed.verbs = [];
             }
-            
-            const data = await response.json();
-            
-            if (Array.isArray(data) && data.length > 0) {
-                return data[0]; // Return first result
-            }
-            
-            return null;
+
+            return parsed;
         } catch (error: any) {
-            this.logger.error('Dictionary API lookup failed', { error: error.message, word });
+            this.logger.warn('Cambridge fetch failed; trying local API fallback', { 
+                error: error?.message,
+                isCORSError: this.httpClient.isCORSError(error)
+            });
+            
+            // Fallback to local API if available (optional)
+            try {
+                const apiBase = (window as any).__API_BASE || '';
+                if (apiBase !== null) {
+                    const response = await this.httpClient.get(`${apiBase}/api/dictionary/${langSlug}/${encodeURIComponent(word)}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const data = response.data;
+                    if (!(data && data.error)) return data as CambridgeAPIResponse;
+                }
+            } catch (fallbackError: any) {
+                this.logger.error('Local API fallback also failed', { error: fallbackError?.message });
+            }
             throw new Error('Failed to look up word in dictionary');
         }
     }
 
+    // Map our UI language slug to Cambridge path + nation
+    private mapCambridgeLang(slug: string): { nation: 'us' | 'uk'; languagePath: string } {
+        switch (slug) {
+            case 'uk':
+                return { nation: 'uk', languagePath: 'english' };
+            case 'en-tw':
+                return { nation: 'us', languagePath: 'english-chinese-traditional' };
+            case 'en-cn':
+                return { nation: 'us', languagePath: 'english-chinese-simplified' };
+            case 'en':
+            default:
+                return { nation: 'us', languagePath: 'english' };
+        }
+    }
+
+    // Fetch raw HTML using HTTP client with CORS proxy fallback
+    private async fetchHtml(url: string): Promise<string> {
+        return await this.httpClient.getHtmlWithProxy(url);
+    }
+
+    // Parse Cambridge HTML into our structured response (jQuery -> DOMParser equivalent)
+    private parseCambridgeHtml(html: string): CambridgeAPIResponse {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const siteurl = 'https://dictionary.cambridge.org';
+
+        const word = doc.querySelector('.hw.dhw')?.textContent?.trim() || '';
+        if (!word) throw new Error('word not found');
+
+        // POS list
+        const posSet = new Set<string>();
+        doc.querySelectorAll('.pos.dpos').forEach(el => {
+            const t = el.textContent?.trim();
+            if (t) posSet.add(t);
+        });
+        const pos = Array.from(posSet);
+
+        // Pronunciations
+        const pronunciation: CambridgePronunciation[] = [];
+        doc.querySelectorAll('.pos-header.dpos-h').forEach(section => {
+            const pText = (section.querySelector('.dpos-g')?.textContent || '').trim();
+            section.querySelectorAll('.dpron-i').forEach(node => {
+                const lang = (node.querySelector('.region.dreg')?.textContent || '').trim();
+                const source = node.querySelector('audio source') as HTMLSourceElement | null;
+                const audioSrc = source?.getAttribute('src') || '';
+                const pron = (node.querySelector('.pron.dpron')?.textContent || '').trim();
+                if (audioSrc && pron) {
+                    const url = audioSrc.startsWith('http') ? audioSrc : siteurl + audioSrc;
+                    pronunciation.push({ pos: pText, lang, url, pron });
+                }
+            });
+        });
+
+        // Definitions
+        const definition: CambridgeDefinitionBlock[] = [];
+        doc.querySelectorAll('.def-block.ddef_block').forEach((block, index) => {
+            const el = block as HTMLElement;
+            const entryEl = el.closest('.pr.entry-body__el') as HTMLElement | null;
+            const defPOS = (entryEl?.querySelector('.pos.dpos')?.textContent || '').trim();
+            const dictEl = el.closest('.pr.dictionary') as HTMLElement | null;
+            const source = dictEl?.getAttribute('data-id') || undefined;
+            const text = (el.querySelector('.def.ddef_d.db')?.textContent || '').trim();
+            const translation = (el.querySelector('.def-body.ddef_b > span.trans.dtrans')?.textContent || '').trim();
+
+            const example: CambridgeExample[] = [];
+            el.querySelectorAll('.def-body.ddef_b > .examp.dexamp').forEach((ex, i) => {
+                const exEl = ex as HTMLElement;
+                const eText = (exEl.querySelector('.eg.deg')?.textContent || '').trim();
+                const eTrans = (exEl.querySelector('.trans.dtrans')?.textContent || '').trim();
+                example.push({ id: i, text: eText, translation: eTrans || undefined });
+            });
+
+            definition.push({ id: index, pos: defPOS, source, text, translation: translation || undefined, example });
+        });
+
+        return {
+            word,
+            pos,
+            verbs: [], // optionally filled later
+            pronunciation,
+            definition,
+        };
+    }
+
+    // Best-effort verbs scraper from Simple Wiktionary
+    private async fetchVerbsFromWiktionary(entry: string): Promise<{ id: number; type: string; text: string }[]> {
+        const url = `https://simple.wiktionary.org/wiki/${encodeURIComponent(entry)}`;
+        const html = await this.fetchHtml(url);
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        const verbs: { id: number; type: string; text: string }[] = [];
+        const cells = Array.from(doc.querySelectorAll('.inflection-table tr td')) as HTMLElement[];
+        let id = 0;
+        for (const cell of cells) {
+            const p = cell.querySelector('p');
+            if (!p) continue;
+            const pText = (p.textContent || '').trim();
+            if (pText.includes('\n')) {
+                const parts = pText.split('\n').map(s => s.trim()).filter(Boolean);
+                if (parts.length >= 2) {
+                    const type = parts[0];
+                    const text = parts[1];
+                    if (type && text) verbs.push({ id: id++, type, text });
+                }
+            } else {
+                const htmlParts = (p.innerHTML || '').split('<br>');
+                if (htmlParts.length >= 2) {
+                    const typeTmp = htmlParts[0];
+                    const textTmp = htmlParts[1];
+                    const tmpDiv1 = document.createElement('div'); tmpDiv1.innerHTML = typeTmp; const type = tmpDiv1.textContent?.trim() || '';
+                    const tmpDiv2 = document.createElement('div'); tmpDiv2.innerHTML = textTmp; const text = tmpDiv2.textContent?.trim() || '';
+                    if (type && text) verbs.push({ id: id++, type, text });
+                }
+            }
+        }
+        return verbs;
+    }
+
     /**
-     * Translate text using MyMemory Translation API
+     * Translate text using MyMemory Translation API with axios
      */
     async translateText(text: string, fromLang: string = 'en', toLang: string = 'vi'): Promise<string> {
         try {
-            this.logger.info('Translating text', { text, fromLang, toLang });
-            const response = await fetch(
+            this.logger.info('Translating text with axios', { text, fromLang, toLang });
+            const response = await this.httpClient.get<MyMemoryResponse>(
                 `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`
             );
             
-            if (!response.ok) {
-                throw new Error(`Translation API error: ${response.status}`);
-            }
-            
-            const data: MyMemoryResponse = await response.json();
+            const data = response.data;
             
             if (data.responseStatus === 200 && data.responseData?.translatedText) {
                 return data.responseData.translatedText;
@@ -166,7 +326,7 @@ class WordsManager {
      * Lookup word and translate automatically
      */
     async lookupAndTranslate(word: string): Promise<{
-        dictionaryData: DictionaryAPIResponse;
+        dictionaryData: CambridgeAPIResponse;
         vietnameseTranslation: string;
         vietnameseDefinition?: string;
     }> {
@@ -176,17 +336,14 @@ class WordsManager {
             throw new Error('Word not found in dictionary');
         }
 
-        // Get texts to translate
-        const firstMeaning = dictionaryData.meanings[0];
-        const firstDefinition = firstMeaning?.definitions[0];
+        // Take the first definition text if available
+        const firstDefinitionText = dictionaryData.definition?.[0]?.text || '';
         
-        // Translate word meaning
+        // Translate word and first definition
         const vietnameseTranslation = await this.translateText(word);
-        
-        // Translate definition if available
         let vietnameseDefinition: string | undefined;
-        if (firstDefinition?.definition) {
-            vietnameseDefinition = await this.translateText(firstDefinition.definition);
+        if (firstDefinitionText) {
+            vietnameseDefinition = await this.translateText(firstDefinitionText);
         }
 
         return {
@@ -197,61 +354,52 @@ class WordsManager {
     }
 
     /**
-     * Categorize phonetics by accent
+     * Categorize pronunciations (UK/US/AU) from Cambridge response
      */
-    private categorizePhonetics(phonetics: any[]): {
-        british?: any;
-        american?: any;
-        australian?: any;
+    private categorizePronunciations(prons: CambridgePronunciation[]): {
+        british?: { text: string; audio: string };
+        american?: { text: string; audio: string };
+        australian?: { text: string; audio: string };
     } {
-        const result: any = {};
+        const pick = (match: RegExp) => prons.find(p => match.test(p.lang || ''));
+        const uk = pick(/UK/i) || prons.find(p => /brit|gb/i.test(p.lang || ''));
+        const us = pick(/US/i) || prons.find(p => /amer/i.test(p.lang || ''));
+        const au = pick(/AU/i) || prons.find(p => /aus/i.test(p.lang || ''));
         
-        // Find British pronunciation (UK, GB, or first with audio)
-        result.british = phonetics.find(p => 
-            p.text && (p.text.includes('UK') || p.text.includes('GB') || p.audio)
-        ) || phonetics[0];
-        
-        // Find American pronunciation (US)
-        result.american = phonetics.find(p => 
-            p.text && (p.text.includes('US') || p.text.includes('American'))
-        ) || phonetics[1] || phonetics[0];
-        
-        // Find Australian pronunciation (AU)
-        result.australian = phonetics.find(p => 
-            p.text && (p.text.includes('AU') || p.text.includes('Australian'))
-        );
-        
-        return result;
+        return {
+            british: uk ? { text: uk.pron || '', audio: uk.url || '' } : undefined,
+            american: us ? { text: us.pron || '', audio: us.url || '' } : undefined,
+            australian: au ? { text: au.pron || '', audio: au.url || '' } : undefined,
+        };
     }
 
     /**
-     * Parse Dictionary API response to Word data
+     * Parse Cambridge response to Word data
      */
     private parseDictionaryResponse(
-        response: DictionaryAPIResponse, 
+        response: CambridgeAPIResponse, 
         categoryId: string, 
         vietnameseTranslation: string,
         vietnameseDefinition?: string
     ): Partial<Word> {
-        const categorizedPhonetics = this.categorizePhonetics(response.phonetics);
-        
-        const firstMeaning = response.meanings[0];
-        const firstDefinition = firstMeaning?.definitions[0];
+        const categorized = this.categorizePronunciations(response.pronunciation || []);
+        const firstPOS = response.pos?.[0] || response.definition?.[0]?.pos || '';
+        const firstDefinition = response.definition?.[0]?.text || '';
         
         return {
             categoryId,
             englishWord: response.word,
             vietnameseTranslation,
-            britishPronunciation: categorizedPhonetics.british?.text || '',
-            americanPronunciation: categorizedPhonetics.american?.text || '',
-            australianPronunciation: categorizedPhonetics.australian?.text || '',
-            partOfSpeech: firstMeaning?.partOfSpeech || '',
-            definition: firstDefinition?.definition || '',
+            britishPronunciation: categorized.british?.text || '',
+            americanPronunciation: categorized.american?.text || '',
+            australianPronunciation: categorized.australian?.text || '',
+            partOfSpeech: firstPOS,
+            definition: firstDefinition,
             vietnameseDefinition: vietnameseDefinition || '',
             audioUrls: {
-                british: categorizedPhonetics.british?.audio || '',
-                american: categorizedPhonetics.american?.audio || '',
-                australian: categorizedPhonetics.australian?.audio || ''
+                british: categorized.british?.audio || '',
+                american: categorized.american?.audio || '',
+                australian: categorized.australian?.audio || ''
             },
             userId: this.currentUser.uid
         };
@@ -574,7 +722,6 @@ class WordsManager {
             return;
         }
 
-        // Check network connection
         if (!this.isOnline) {
             this.showError('No internet connection. Please try again when online.');
             return;
@@ -582,7 +729,6 @@ class WordsManager {
 
         this.logger.info('Looking up word from input', { englishWord });
         
-        // Show loading state
         this.showLoading(true);
         const lookupBtn = document.getElementById('lookup-word-btn') as HTMLButtonElement;
         if (lookupBtn) {
@@ -619,15 +765,15 @@ class WordsManager {
      * Populate form with dictionary data and translations
      */
     private populateFormFromDictionary(
-        dictionaryData: DictionaryAPIResponse,
+        dictionaryData: CambridgeAPIResponse,
         vietnameseTranslation?: string,
         vietnameseDefinition?: string
     ): void {
-        const categorizedPhonetics = this.categorizePhonetics(dictionaryData.phonetics);
+        const categorized = this.categorizePronunciations(dictionaryData.pronunciation || []);
         
-        // Find first meaning and definition
-        const firstMeaning = dictionaryData.meanings[0];
-        const firstDefinition = firstMeaning?.definitions[0];
+        // Determine first POS and definition
+        const firstPOS = dictionaryData.pos?.[0] || dictionaryData.definition?.[0]?.pos || '';
+        const firstDefinition = dictionaryData.definition?.[0]?.text || '';
 
         // Populate form fields
         const vietnameseTranslationInput = document.getElementById('vietnamese-translation-input') as HTMLInputElement;
@@ -638,17 +784,16 @@ class WordsManager {
         const definitionInput = document.getElementById('definition-input') as HTMLTextAreaElement;
         const vietnameseDefinitionInput = document.getElementById('vietnamese-definition-input') as HTMLTextAreaElement;
 
-        // Populate basic fields (readonly fields from API)
         if (vietnameseTranslationInput) vietnameseTranslationInput.value = vietnameseTranslation || '';
-        if (britishPronunciationInput) britishPronunciationInput.value = categorizedPhonetics.british?.text || '';
-        if (americanPronunciationInput) americanPronunciationInput.value = categorizedPhonetics.american?.text || '';
-        if (australianPronunciationInput) australianPronunciationInput.value = categorizedPhonetics.australian?.text || '';
-        if (partOfSpeechInput) partOfSpeechInput.value = firstMeaning?.partOfSpeech || '';
-        if (definitionInput) definitionInput.value = firstDefinition?.definition || '';
+        if (britishPronunciationInput) britishPronunciationInput.value = categorized.british?.text || '';
+        if (americanPronunciationInput) americanPronunciationInput.value = categorized.american?.text || '';
+        if (australianPronunciationInput) australianPronunciationInput.value = categorized.australian?.text || '';
+        if (partOfSpeechInput) partOfSpeechInput.value = firstPOS || '';
+        if (definitionInput) definitionInput.value = firstDefinition || '';
         if (vietnameseDefinitionInput) vietnameseDefinitionInput.value = vietnameseDefinition || '';
 
-        // Setup audio buttons
-        this.setupAudioButtons(categorizedPhonetics);
+        // Setup audio buttons (and default play button)
+        this.setupAudioButtons(categorized);
     }
 
     /**
@@ -658,6 +803,7 @@ class WordsManager {
         const britishAudioBtn = document.getElementById('british-audio-btn') as HTMLButtonElement;
         const americanAudioBtn = document.getElementById('american-audio-btn') as HTMLButtonElement;
         const australianAudioBtn = document.getElementById('australian-audio-btn') as HTMLButtonElement;
+        const defaultPlayBtn = document.getElementById('play-audio-btn') as HTMLButtonElement;
 
         // British audio
         if (britishAudioBtn) {
@@ -689,12 +835,17 @@ class WordsManager {
             }
         }
 
-        // Store audio URLs for legacy support
+        // Store audio URLs and set default play button (prefer UK, then US)
+        const defaultAudio = categorizedPhonetics.british?.audio || categorizedPhonetics.american?.audio || '';
         (window as any).currentAudioUrls = {
             british: categorizedPhonetics.british?.audio || '',
             american: categorizedPhonetics.american?.audio || '',
             australian: categorizedPhonetics.australian?.audio || ''
         };
+        (window as any).currentAudioUrl = defaultAudio;
+        if (defaultPlayBtn) {
+            defaultPlayBtn.style.display = defaultAudio ? 'inline-block' : 'none';
+        }
     }
 
     /**

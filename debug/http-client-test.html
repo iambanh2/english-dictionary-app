@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Client Test - Cambridge Dictionary</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+        
+        .test-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .test-button:hover {
+            background: #2563eb;
+        }
+        
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .test-results {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        
+        .success { color: #059669; }
+        .error { color: #dc2626; }
+        .info { color: #0369a1; }
+        .warning { color: #d97706; }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-online { background: #10b981; }
+        .status-offline { background: #ef4444; }
+        .status-testing { background: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 HTTP Client Test - Cambridge Dictionary</h1>
+        <p>Test axios HTTP client để gọi trực tiếp đến Cambridge Dictionary từ frontend</p>
+        
+        <!-- Network Status -->
+        <div class="test-section">
+            <h3><span id="status-indicator" class="status-indicator status-online"></span>Network Status</h3>
+            <p id="network-status">Online - Ready to test</p>
+        </div>
+        
+        <!-- CORS Test -->
+        <div class="test-section">
+            <h3>🔒 CORS Accessibility Test</h3>
+            <p>Kiểm tra xem Cambridge Dictionary có bị chặn bởi CORS không</p>
+            <div style="background: #fef3c7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+                <p><strong>📌 Lưu ý về CORS:</strong></p>
+                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                    <li>Cambridge Dictionary <strong>chặn CORS</strong> từ browser</li>
+                    <li>Chúng ta sẽ thử <strong>CORS proxy</strong> để bypass</li>
+                    <li>Proxy services: cors-anywhere.herokuapp.com, allorigins.win, corsproxy.io</li>
+                    <li>Nếu vẫn fail → cần <strong>backend API proxy</strong></li>
+                </ul>
+            </div>
+            <button id="cors-test-btn" class="test-button">Test CORS Access</button>
+            <div id="cors-results" class="test-results" style="display: none;"></div>
+        </div>
+        
+        <!-- Dictionary Lookup Test -->
+        <div class="test-section">
+            <h3>📚 Dictionary Lookup Test</h3>
+            <p>Test lookup từ điển Cambridge với HTTP client và CORS proxy fallback</p>
+            <div style="background: #dbeafe; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #3b82f6;">
+                <p><strong>🔄 Auto fallback strategy:</strong></p>
+                <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                    <li>Thử truy cập trực tiếp Cambridge</li>
+                    <li>Nếu CORS block → thử CORS proxy #1</li>
+                    <li>Nếu proxy #1 fail → thử CORS proxy #2</li>
+                    <li>Nếu proxy #2 fail → thử CORS proxy #3</li>
+                    <li>Nếu tất cả fail → báo lỗi</li>
+                </ol>
+            </div>
+            <input type="text" id="word-input" class="test-input" placeholder="Enter English word (e.g., 'hello', 'computer')" value="hello">
+            <div>
+                <button id="lookup-btn" class="test-button">🔍 Lookup Word</button>
+                <button id="lookup-uk-btn" class="test-button">🇬🇧 UK Dictionary</button>
+                <button id="lookup-us-btn" class="test-button">🇺🇸 US Dictionary</button>
+            </div>
+            <div id="lookup-results" class="test-results" style="display: none;"></div>
+        </div>
+        
+        <!-- Translation Test -->
+        <div class="test-section">
+            <h3>🌐 Translation API Test</h3>
+            <p>Test MyMemory Translation API với axios</p>
+            <input type="text" id="translation-input" class="test-input" placeholder="Enter text to translate" value="Hello world">
+            <button id="translate-btn" class="test-button">🔄 Translate to Vietnamese</button>
+            <div id="translation-results" class="test-results" style="display: none;"></div>
+        </div>
+        
+        <!-- Wiktionary Test -->
+        <div class="test-section">
+            <h3>📖 Wiktionary Verb Forms Test</h3>
+            <p>Test Simple Wiktionary verb forms scraping</p>
+            <input type="text" id="verb-input" class="test-input" placeholder="Enter verb (e.g., 'run', 'eat')" value="run">
+            <button id="verb-btn" class="test-button">📝 Get Verb Forms</button>
+            <div id="verb-results" class="test-results" style="display: none;"></div>
+        </div>
+        
+        <!-- Back to Main -->
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="../html/index.html" class="test-button" style="text-decoration: none; display: inline-block;">
+                ← Back to Main App
+            </a>
+        </div>
+    </div>
+
+    <!-- Include compiled JavaScript -->
+    <script type="module" src="../js-compiled/debug/http-client-test.js"></script>
+</body>
+</html>
